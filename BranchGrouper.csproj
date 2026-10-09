@@ -17,8 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="BranchGroupsWindow\BranchGroupsContent.xaml"
-                  LogicalName="BranchGrouper.BranchGroupsContent.xaml" />
+    <EmbeddedResource Include="BranchGroupsWindow\BranchGroupsContent.xaml" LogicalName="BranchGrouper.BranchGroupsContent.xaml" />
     <Page Remove="BranchGroupsWindow\BranchGroupsContent.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
   </ItemGroup>
 </Project>
