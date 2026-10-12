@@ -94,7 +94,7 @@ namespace BranchGrouper.BranchGroupsWindow
                     else
                     {
                         var p = Process.Start(new ProcessStartInfo("git", $"-C \"{repo.RepositoryPath}\" branch --format=%(HEAD)%(refname:short)")
-                        { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true });
+                        { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true, StandardOutputEncoding = Encoding.UTF8 });
                         foreach (var line in (await p.StandardOutput.ReadToEndAsync()).Split(['\n'], StringSplitOptions.RemoveEmptyEntries))
                         {
                             var isActive = line.StartsWith("*");
@@ -120,7 +120,7 @@ namespace BranchGrouper.BranchGroupsWindow
         private static async Task<(int Code, string Out, string Err)> Git(string repoPath, string args)
         {
             using var p = Process.Start(new ProcessStartInfo("git", $"-C \"{repoPath}\" {args}")
-            { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true });
+            { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true, StandardOutputEncoding = Encoding.UTF8 });
             var o = p.StandardOutput.ReadToEndAsync();
             var e = p.StandardError.ReadToEndAsync();
             await p.WaitForExitAsync();

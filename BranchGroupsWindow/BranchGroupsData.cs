@@ -203,7 +203,7 @@ internal class BranchGroupsData : NotifyPropertyChangedObject
     {
         var f = _filter.Trim();
         foreach (var g in Groups)
-            g.Matches = f.Length == 0 || g.Name.Contains(f);
+            g.Matches = f.Length == 0 || g.Name.ToLower().Contains(f.ToLower());
     }
 
     private bool _isRemote;
