@@ -83,27 +83,59 @@
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
+
+            <Style x:Key="TabButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static styles:VsBrushes.WindowTextKey}}" />
+                <Setter Property="Padding" Value="12,4" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"
+                        BorderThickness="0,0,0,2" BorderBrush="Transparent">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background"
+                                Value="{DynamicResource {x:Static colors:EnvironmentColors.CommandBarMouseOverBackgroundBeginBrushKey}}" />
+                                </Trigger>
+                                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                                    <Setter TargetName="Bd" Property="BorderBrush"
+                                Value="{DynamicResource {x:Static colors:TreeViewColors.SelectedItemActiveBrushKey}}" />
+                                </DataTrigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </Grid.Resources>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Margin="6">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="6,6,6,0">
+            <Button Style="{StaticResource TabButton}" Content="Local" Tag="{Binding IsLocal}" Command="{Binding ShowLocalCommand}" />
+            <Button Style="{StaticResource TabButton}" Content="Remote" Tag="{Binding IsRemote}" Command="{Binding ShowRemoteCommand}" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox Style="{StaticResource FilterBox}"
-                     Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" ToolTip="Filter groups" />
+             Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" ToolTip="Filter groups" />
             <Button Grid.Column="1" Margin="4,0,0,0" Style="{StaticResource IconButton}"
-                    Command="{Binding RefreshCommand}" ToolTip="Refresh">
+            Command="{Binding RefreshCommand}" ToolTip="Refresh">
                 <vs:Image Source="KnownMonikers.Refresh" />
             </Button>
         </Grid>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Groups}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -141,17 +173,17 @@
                                                         </MenuItem.Icon>
                                                     </MenuItem>
 
-                                                    <MenuItem Header="Pull group" Command="{Binding PullCommand}" />
+                                                    <MenuItem Header="Pull group" Command="{Binding PullCommand}" IsEnabled="{Binding CanModify}" />
 
                                                     <MenuItem Header="Copy branch name" Command="{Binding CopyBranchNameCommand}" />
 
                                                     <Separator />
 
-                                                    <MenuItem Header="Delete everywhere" Command="{Binding DeleteCommand}" />
+                                                    <MenuItem Header="Delete everywhere" Command="{Binding DeleteCommand}" IsEnabled="{Binding CanModify}" />
                                                 </ContextMenu>
                                             </Border.ContextMenu>
                                             <StackPanel Orientation="Horizontal">
-                                                <vs:Image Source="KnownMonikers.Branch" />
+                                                <vs:Image Source="{Binding BranchIcon}" />
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="6,0,0,0" />
                                                 <TextBlock Text="{Binding Count}" Opacity="0.6" Margin="8,0,0,0" />
                                             </StackPanel>

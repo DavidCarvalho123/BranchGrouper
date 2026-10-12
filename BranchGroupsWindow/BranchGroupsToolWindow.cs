@@ -31,7 +31,7 @@ namespace BranchGrouper.BranchGroupsWindow
         {
             Title = "Branch Groups";
             _git = git;
-            data = new(forceShowAsync);
+            data = new(forceShowAsync, SwitchModeAsync);
             content = new(data);
         }
 
@@ -56,28 +56,63 @@ namespace BranchGrouper.BranchGroupsWindow
             isMenuLoaded = false;
             await OnShowAsync(cancellationToken);
         }
+        
+        private async Task SwitchModeAsync(bool remote, CancellationToken ct)
+        {
+            if (data.IsRemote == remote) return;
+            data.IsRemote = remote;
+            isMenuLoaded = false;
+            await OnShowAsync(ct);
+        }
 
         public override async Task OnShowAsync(CancellationToken cancellationToken)
         {
             if (!isMenuLoaded)
             {
+                var remote = data.IsRemote;
                 var git = await _git.GetServiceAsync();
                 var groups = new Dictionary<string, List<RepoItem>>();
                 foreach (var repo in git.ActiveRepositories)
                 {
-                    var p = Process.Start(new ProcessStartInfo("git", $"-C \"{repo.RepositoryPath}\" branch --format=%(HEAD)%(refname:short)")
-                    { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true });
                     var name = Path.GetFileName(repo.RepositoryPath.TrimEnd('\\', '/'));
-                    foreach (var line in (await p.StandardOutput.ReadToEndAsync()).Split(['\n'], StringSplitOptions.RemoveEmptyEntries))
+                    var found = new List<(string Branch, bool IsActive)>();
+
+                    if (remote)
                     {
-                        var isActive = line.StartsWith("*");
-                        var branch = line.Substring(1).Trim();
-                        if (branch.StartsWith("(")) continue; // detached HEAD isn't a branch
+                        var current = (await Git(repo.RepositoryPath, "branch --show-current")).Out.Trim();
+                        var refs = (await Git(repo.RepositoryPath, "for-each-ref --format=%(refname) refs/remotes")).Out;
+                        foreach (var line in refs.Split(['\n'], StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            var rest = line.Trim().Substring("refs/remotes/".Length);
+                            var slash = rest.IndexOf('/');
+                            if (slash < 0) continue;
+                            var branch = rest.Substring(slash + 1);
+                            if (branch == "HEAD") continue;
+                            found.Add((branch, branch == current));
+                        }
+                    }
+                    else
+                    {
+                        var p = Process.Start(new ProcessStartInfo("git", $"-C \"{repo.RepositoryPath}\" branch --format=%(HEAD)%(refname:short)")
+                        { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true });
+                        foreach (var line in (await p.StandardOutput.ReadToEndAsync()).Split(['\n'], StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            var isActive = line.StartsWith("*");
+                            var branch = line.Substring(1).Trim();
+                            if (branch.StartsWith("(")) continue;
+                            found.Add((branch, isActive));
+                        }
+                    }
+
+                    var seen = new HashSet<string>();
+                    foreach (var (branch, isActive) in found)
+                    {
+                        if (!seen.Add(branch)) continue;
                         if (!groups.TryGetValue(branch, out var list)) groups[branch] = list = new List<RepoItem>();
-                        list.Add(new RepoItem(branch,name,isActive,repo.RepositoryPath,data.Select,CheckoutRepoAsync,OpenFolderAsync,CopyRepoPathAsync));
+                        list.Add(new RepoItem(branch, name, isActive, repo.RepositoryPath, data.Select, CheckoutRepoAsync, OpenFolderAsync, CopyRepoPathAsync));
                     }
                 }
-                data.SetGroups(groups.Where(g => g.Value.Count >= 2).OrderBy(g => g.Key).Select(g => new BranchGroupItem(g.Key, g.Value, CheckoutGroupAsync, PullGroupAsync, CopyBranchNameAsync, DeleteGroupAsync, data.Select)));
+                data.SetGroups(groups.Where(g => g.Value.Count >= 2).OrderBy(g => g.Key).Select(g => new BranchGroupItem(g.Key, g.Value, CheckoutGroupAsync, PullGroupAsync, CopyBranchNameAsync, DeleteGroupAsync, data.Select, remote)));
                 isMenuLoaded = data.Groups.Count > 0;
             }
         }

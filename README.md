@@ -15,3 +15,4 @@ Active branches are marked with a blue background. If all repositories from a gr
 * Group Delete
 * Pull Group
 * Single Repo Checkout
+* Local & Remote Git operations

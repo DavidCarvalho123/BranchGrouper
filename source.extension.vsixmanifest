@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="BranchGrouper.f3de2d75-37a5-4cfe-8fdd-81a4442ed5d8" Version="0.0.1" Language="en-US" Publisher="David Carvalho" />
+    <Identity Id="BranchGrouper.f3de2d75-37a5-4cfe-8fdd-81a4442ed5d8" Version="0.0.2" Language="en-US" Publisher="David Carvalho" />
     <DisplayName>Git Branch Grouper</DisplayName>
     <Description>Visual Studio toolbar extension to automatically group branches with identical names from a multi-repo solution</Description>
     <Preview>true</Preview>

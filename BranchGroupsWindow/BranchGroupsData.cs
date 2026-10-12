@@ -77,7 +77,8 @@ internal class BranchGroupItem : NotifyPropertyChangedObject
         Func<BranchGroupItem, CancellationToken, Task> pull,
         Func<BranchGroupItem, CancellationToken, Task> copyBranchName,
         Func<BranchGroupItem, CancellationToken, Task> delete,
-        Action<object> select)
+        Action<object> select,
+        bool isRemote)
     {
         Name = name;
         Repos = repos;
@@ -110,6 +111,7 @@ internal class BranchGroupItem : NotifyPropertyChangedObject
             IsExpanded = !IsExpanded;
             return Task.CompletedTask;
         });
+        IsRemote = isRemote;
     }
 
 
@@ -136,18 +138,34 @@ internal class BranchGroupItem : NotifyPropertyChangedObject
         set { SetProperty(ref _isExpanded, value); _select(this); }
     }
     [DataMember] public AsyncCommand ToggleCommand { get; }
+    public bool IsRemote { get; set; }
+    [DataMember] public bool CanModify => !IsRemote;
+    [DataMember] public string BranchIcon => IsRemote ? "KnownMonikers.BranchRemote" : "KnownMonikers.Branch";
 }
 
 [DataContract]
 internal class BranchGroupsData : NotifyPropertyChangedObject
 {
-    public BranchGroupsData(Func<CancellationToken, Task> refresh)
+    public BranchGroupsData(Func<CancellationToken, Task> refresh, Func<bool, CancellationToken, Task> switchMode)
     {
         RefreshCommand = new((_, ct) =>
         {
             Filter = "";
             Groups.Clear();
             return refresh(ct); 
+        });
+
+        ShowLocalCommand = new((_, ct) =>
+        {
+            Filter = "";
+            Groups.Clear();
+            return switchMode(false, ct);
+        });
+        ShowRemoteCommand = new((_, ct) =>
+        {
+            Filter = "";
+            Groups.Clear();
+            return switchMode(true, ct);
         });
     }
 
@@ -187,4 +205,16 @@ internal class BranchGroupsData : NotifyPropertyChangedObject
         foreach (var g in Groups)
             g.Matches = f.Length == 0 || g.Name.Contains(f);
     }
+
+    private bool _isRemote;
+    [DataMember]
+    public bool IsRemote
+    {
+        get => _isRemote;
+        set { SetProperty(ref _isRemote, value); RaiseNotifyPropertyChangedEvent(nameof(IsLocal)); }
+    }
+    [DataMember] public bool IsLocal => !_isRemote;
+
+    [DataMember] public AsyncCommand ShowLocalCommand { get; }
+    [DataMember] public AsyncCommand ShowRemoteCommand { get; }
 }
